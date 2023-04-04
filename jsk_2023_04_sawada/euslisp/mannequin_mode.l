@@ -1,0 +1,31 @@
+(defun mannequin-mode ()
+  (ros::load-ros-manifest "pr2_mechanism_msgs")
+  (ros::roseus "mannequin_mode")
+  (ros::wait-for-service "/pr2_controller_manager/switch_controller")
+  (setq req (instance pr2_mechanism_msgs::SwitchControllerRequest :init))
+  ;;(send req :start_controllers (list "r_arm_controller"))
+  ;;(send req :stop_controllers (list "r_arm_controller_loose"))
+  (send req :start_controllers (list "r_arm_controller_loose"))
+  (send req :stop_controllers (list "r_arm_controller"))
+  (setq res (ros::service-call "/pr2_controller_manager/switch_controller" req t))
+  )
+
+
+(defun voice-cb (msg)
+  (when msg
+    (setq *msg* msg)
+    (setq *voice-data* (send *msg* :transcript))
+    (setq *voice-data-flag* t)
+    (format t "voice-data: ~A ~%" *voice-data*)
+    )
+  )
+
+(defun dialogue-func ()
+  (ros::unsbscribe "/speech_to_text")
+  (setq *voice-data-flag* nil)
+  (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-cb)
+  (util *voice-data-flag*
+	(ros::spin-once)
+	(ros::sleep)
+	)
+  )
