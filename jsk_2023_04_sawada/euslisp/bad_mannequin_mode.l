@@ -1,26 +1,26 @@
-;; å¿…è¦ãªmsgã®å‹ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹
+;; É¬Í×¤Êmsg¤Î·¿¤ò¥í¡¼¥É¤¹¤ë
 (ros::load-ros-manifest "pr2_mechanism_msgs")
 (ros::load-ros-manifest "speech_recognition_msgs")
 (load "package://pr2eus/pr2-interface.l")
-;; ã“ã“ã§*ri* *pr2*ãŒä½œã‚‰ã‚Œã‚‹
+;; ¤³¤³¤Ç*ri* *pr2*¤¬ºî¤é¤ì¤ë
 (pr2-init)
 
 (defun mannequin-mode (flag)
-  ;; ãƒãƒ¼ãƒ‰ã‚’å®£è¨€ã™ã‚‹
+  ;; ¥Î¡¼¥É¤òÀë¸À¤¹¤ë
   (ros::roseus "mannequin_mode")
-  ;; ã‚µãƒ¼ãƒ“ã‚¹ãŒä½¿ãˆã‚‹ã‚ˆã†ã«ãªã‚‹ã¾ã§å¾…æ©Ÿã™ã‚‹
+  ;; ¥µ¡¼¥Ó¥¹¤¬»È¤¨¤ë¤è¤¦¤Ë¤Ê¤ë¤Ş¤ÇÂÔµ¡¤¹¤ë
   (ros::wait-for-service "/pr2_controller_manager/switch_controller")
-  ;; requestã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’åˆæœŸåŒ–ã—ã¦ä½œã‚‹
+  ;; request¤Î¥á¥Ã¥»¡¼¥¸¤ò½é´ü²½¤·¤Æºî¤ë
   (setq req (instance pr2_mechanism_msgs::SwitchControllerRequest :init))
-  ;; requestã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã«ä¸­èº«ã‚’å…¥ã‚Œã‚‹
-  ;; flagãŒtã®ã¨ãã«ã¯ãƒãƒã‚­ãƒ³ãƒ¢ãƒ¼ãƒ‰ã«ã™ã‚‹
+  ;; request¤Î¥á¥Ã¥»¡¼¥¸¤ËÃæ¿È¤òÆş¤ì¤ë
+  ;; flag¤¬t¤Î¤È¤­¤Ë¤Ï¥Ş¥Í¥­¥ó¥â¡¼¥É¤Ë¤¹¤ë
   (if flag
 	  (progn
 		(send req :start_controllers (list "r_arm_controller_loose"))
 		(send req :stop_controllers (list "r_arm_controller"))
 		(send *ri* :speak-en "change to mannequin mode")
 		)
-	;; flagãŒnilã®ã¨ãã¯ãƒãƒã‚­ãƒ³ãƒ¢ãƒ¼ãƒ‰ã‚’ã‚„ã‚ã‚‹
+	;; flag¤¬nil¤Î¤È¤­¤Ï¥Ş¥Í¥­¥ó¥â¡¼¥É¤ò¤ä¤á¤ë
 	(progn
 	  (send req :start_controllers (list "r_arm_controller"))
 	  (send req :stop_controllers (list "r_arm_controller_loose"))
@@ -28,9 +28,9 @@
 	  )
 	)
   
-  ;; /pr2_controller_manager/switch_controllerã«reqã‚’æµã™?
+  ;; /pr2_controller_manager/switch_controller¤Ëreq¤òÎ®¤¹?
   (setq res (ros::service-call "/pr2_controller_manager/switch_controller" req t))
-  ;; è©±ã™
+  ;; ÏÃ¤¹
 
   )
 
@@ -41,7 +41,7 @@
     (setq *voice-data* (send *msg* :transcript))
     (setq *voice-data-flag* t)
     (format t "voice-data: ~A ~%" *voice-data*)
-	(format t "condition : ~A ~%" (string-equal "ã‚¹ãƒˆãƒƒãƒ—" (car *voice-data*)))
+	(format t "condition : ~A ~%" (string-equal "¥¹¥È¥Ã¥×" (car *voice-data*)))
 	(cond
 	 ((equal (list "OK") *voice-data*)
 	  (progn
@@ -49,11 +49,12 @@
 		(mannequin-mode t)
 		)
 	  )
-	 ((equal (list "ã‚¹ãƒˆãƒƒãƒ—") *voice-data*)
-	  (progn
-		(format t "stop was said")
-		(mannequin-mode nil)
-		)
+	 ((equal (list "¥¹¥È¥Ã¥×") *voice-data*)
+	  ;;(progn
+		;;(format t "stop was said")
+		;;(mannequin-mode nil)
+	  ;;)
+	  (format t "stop was said")
 	  )
 	 (t
 	  (print "hoge"))
@@ -63,22 +64,22 @@
 
 (defun dialogue-func ()
   (ros::roseus "speech")
-  ;; ã¨ã‚Šã‚ãˆãšã„ã‚Œã¦ãŠãã‚„ã¤
+  ;; ¤È¤ê¤¢¤¨¤º¤¤¤ì¤Æ¤ª¤¯¤ä¤Ä
   (ros::unsubscribe "/speech_to_text")
-  ;; voiceãŒæ¥ãŸã‹ã©ã†ã‹ã®flag
+  ;; voice¤¬Íè¤¿¤«¤É¤¦¤«¤Îflag
   (setq *voice-data-flag* nil)
   (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-cb)
-  ;; éŸ³å£°ãŒæ¥ã¦ã‚‹é–“
+  ;; ²»À¼¤¬Íè¤Æ¤ë´Ö
   (until *voice-data-flag*
-		;;cbé–¢æ•°ã‚’1å›å®Ÿè¡Œã™ã‚‹
+		;;cb´Ø¿ô¤ò1²ó¼Â¹Ô¤¹¤ë
 		(ros::spin-once)
-		;; æ™‚é–“ã‚’è²¯ã‚ã‚‹
+		;; »ş´Ö¤òÃù¤á¤ë
 		(ros::sleep)
 	)
   )
 
 (dialogue-func)
-(format t "condition at the end: ~A ~%" (equal (list "ã‚¹ãƒˆãƒƒãƒ—") *voice-data*))
-(format t "condition2 at the end: ~A ~%" (equal '("ã‚¹ãƒˆãƒƒãƒ—") *voice-data*))
+(format t "condition at the end: ~A ~%" (equal (list "¥¹¥È¥Ã¥×") *voice-data*))
+(format t "condition2 at the end: ~A ~%" (equal '("¥¹¥È¥Ã¥×") *voice-data*))
 
 
