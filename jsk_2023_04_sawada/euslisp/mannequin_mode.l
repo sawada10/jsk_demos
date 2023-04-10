@@ -4,6 +4,8 @@
 (load "package://pr2eus/pr2-interface.l")
 ;; ここで*ri* *pr2*が作られる
 (pr2-init)
+;; これは体勢を保存しておくためのリスト
+(defvar *pose-memory-list*)
 
 (defun mannequin-mode (flag)
   ;; ノードを宣言する
@@ -31,7 +33,6 @@
   ;; /pr2_controller_manager/switch_controllerにreqを流す?
   (setq res (ros::service-call "/pr2_controller_manager/switch_controller" req t))
   ;; 話す
-
   )
 
 
@@ -46,15 +47,19 @@
 	 ((equal (list "OK") *voice-data*)
 	  (progn
 		(format t "ok was said")
-		(mannequin-mode t)
-		)
-	  )
+		(mannequin-mode t)))
 	 ((equal (list "ストップ") *voice-data*)
 	  (progn
-		(format t "stop was said")
-		(mannequin-mode nil)
-		)
-	  )
+		(format t "stop was said ... ~%")
+		(mannequin-mode nil)))
+	 ((equal (list "覚えて") *voice-data*)
+	  (progn
+		(format t "remembering ... ~%")
+		(save-motion)))
+	 ((equal (list "再現") *voice-data*)
+	  (progn
+		(format t "execting ... ~%")
+		(exec-memorized-motion)))
 	 (t
 	  (print "hoge"))
 	 )
@@ -69,16 +74,27 @@
   (setq *voice-data-flag* nil)
   (ros::subscribe "/speech_to_text" speech_recognition_msgs::SpeechRecognitionCandidates #'voice-cb)
   ;; 音声が来てる間
-  (until *voice-data-flag*
-		;;cb関数を1回実行する
-		(ros::spin-once)
-		;; 時間を貯める
-		(ros::sleep)
-	)
+  ;;(until *voice-data-flag*
+  (do-until-key
+  ;;cb関数を1回実行する
+   (ros::spin-once)
+   ;; 時間を貯める
+   (ros::sleep))
   )
 
+(defun save-motion ()
+  (send *ri* :speak-jp "記憶します")
+  (push (copy-object (send *ri* :state :potentio-vector)) *pose-memory-list*)
+  (nreverse *pose-memory-list*)
+  (dump-loadable-structure "poses.l" *pose-memory-list*)
+  )
+
+(defun exec-memorized-motion ()
+  (send *ri* :speak-jp "再現します")
+  ;; ファイルをloadすると、*pose-memory-list*ができる
+  (load "poses.l")
+  (dolist (pose-memory *pose-memory-list*)
+	(send *ri* :angle-vector pose-memory)
+	(unix:sleep 2)))
+
 (dialogue-func)
-(format t "condition at the end: ~A ~%" (equal (list "ストップ") *voice-data*))
-(format t "condition2 at the end: ~A ~%" (equal '("ストップ") *voice-data*))
-
-

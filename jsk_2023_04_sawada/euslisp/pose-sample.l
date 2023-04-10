@@ -1,8 +1,0 @@
-(load "package://pr2eus/pr2-interface.l")
-(pr2-init)
-(objects *pr2*)
-;;(send *pr2* :rarm :inverse-kinematics (make-coords :pos #f(800 0 800)))
-(send *pr2* :reset-manip-pose)
-(send *ri* :angle-vector (send *pr2* :angle-vector) 3000)
-(send *ri* :wait-interpolation)
-;;(send *ri* :go-pos-unsafe 0.1 0 0)
