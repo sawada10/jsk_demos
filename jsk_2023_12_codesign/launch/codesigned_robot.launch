@@ -1,0 +1,22 @@
+<launch>
+  <!-- Robot name argument -->
+  <arg name="robot_name" default="kashiwagi" />
+
+  <!-- Path to URDF file -->
+  <arg name="urdf_path" default="$(find codesigned_robot_2023)/$(arg robot_name)_2023/urdf/$(arg robot_name).urdf" />
+  
+  <!-- Path to servo configuration file -->
+  <arg name="servo_config_path" value="$(find codesigned_robot_2023)/$(arg robot_name)_2023/config/$(arg robot_name)_servo_config.yaml" />
+
+  <!-- Launch main controller -->
+  <include file="$(find kxr_controller)/launch/kxr_controller.launch">
+    <arg name="urdf_path" value="$(arg urdf_path)" />
+    <arg name="servo_config_path" value="$(arg servo_config_path)" />
+  </include>
+
+  <!-- Launch differential drive controller -->
+  <include file="$(find kxr_controller)/launch/diff_drive_controller.launch" />
+
+  <!-- Launch joystick control (uncomment if needed) -->
+  <!-- <include file="$(find kxr_controller)/launch/joy.launch" /> -->
+</launch>
