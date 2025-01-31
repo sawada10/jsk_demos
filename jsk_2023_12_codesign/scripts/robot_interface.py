@@ -14,8 +14,7 @@ from kxr_controller.msg import ServoOnOffAction
 from kxr_controller.msg import ServoOnOffGoal
 
 # from save_angle_vector import save_angle_vector_mode
-
-
+robot_name = rospy.get_param("/robot_name")
 
 class ArmROSRobotInterface(ROSRobotInterfaceBase):
 
@@ -24,10 +23,10 @@ class ArmROSRobotInterface(ROSRobotInterfaceBase):
         namespace = '/{}'.format(namespace) if namespace else ''
         self.joint_names = rospy.get_param(
             namespace
-            + '/kxr_fullbody_controller/joints')
+            + '/fullbody_controller/joints')
         super(ArmROSRobotInterface, self).__init__(*args, **kwargs)
         self.servo_on_off_client = actionlib.SimpleActionClient(
-            namespace + '/kxr_fullbody_controller/servo_on_off',
+            namespace + '/fullbody_controller/servo_on_off_real_interface',
             ServoOnOffAction)
         self.servo_on_off_client.wait_for_server()
 
@@ -61,9 +60,9 @@ class ArmROSRobotInterface(ROSRobotInterfaceBase):
     @property
     def fullbody_controller(self):
         return dict(
-            controller_type='kxr_fullbody_controller',
-            controller_action='kxr_fullbody_controller/follow_joint_trajectory',
-            controller_state='kxr_fullbody_controller/state',
+            controller_type='fullbody_controller',
+            controller_action='fullbody_controller/follow_joint_trajectory',
+            controller_state='fullbody_controller/state',
             action_type=control_msgs.msg.FollowJointTrajectoryAction,
             joint_names=self.joint_names,
         )
@@ -94,7 +93,7 @@ def save_angle_vector_mode():
 
 rospy.init_node('interface_controller')
 r = RobotModel()
-urdf_path = resolve_filepath("", "package://kxr_models/urdf/kashiwagi.urdf")
+urdf_path = resolve_filepath("", "package://codesigned_robot_2023/urdf/" + robot_name + ".urdf")
 with open(urdf_path) as f:
     r.load_urdf_file(f)
 v = TrimeshSceneViewer()
