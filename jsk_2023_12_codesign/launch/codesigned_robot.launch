@@ -2,11 +2,14 @@
   <!-- Robot name argument -->
   <arg name="robot_name" default="kashiwagi" />
 
+  <!-- Set robot_name as a ROS parameter -->
+  <param name="robot_name" value="$(arg robot_name)" />
+  
   <!-- Path to URDF file -->
-  <arg name="urdf_path" default="$(find codesigned_robot_2023)/$(arg robot_name)_2023/urdf/$(arg robot_name).urdf" />
+  <arg name="urdf_path" default="$(find codesigned_robot_2023)/urdf/$(arg robot_name).urdf" />
   
   <!-- Path to servo configuration file -->
-  <arg name="servo_config_path" value="$(find codesigned_robot_2023)/$(arg robot_name)_2023/config/$(arg robot_name)_servo_config.yaml" />
+  <arg name="servo_config_path" value="$(find codesigned_robot_2023)/config/$(arg robot_name)_servo_config.yaml" />
 
   <!-- Launch main controller -->
   <include file="$(find kxr_controller)/launch/kxr_controller.launch">
