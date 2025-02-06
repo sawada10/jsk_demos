@@ -34,6 +34,11 @@ source <ワークスペース>/devel/setup.bash
 roslaunch jsk_2023_12_codesign codesigned_robot.launch robot_name:=kuromitsu
 ```
 ※launchするときにrobot_nameに動かしたいロボットの名前（kashiwagi/kuromitsu）を指定する。
+※joyを使いたいときは、joyをlaunchファイルを立ち上げているPCにUSB接続したうえで、`joy`を`true`に設定する。
+e.g.
+```
+roslaunch jsk_2023_12_codesign codesigned_robot.launch joy:=true
+```
 
 ### 動作を保存する
 ```
