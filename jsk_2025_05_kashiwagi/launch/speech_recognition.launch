@@ -1,0 +1,167 @@
+<launch>
+  <!--
+    Speech recognition entry point for jsk_2025_05_kashiwagi.
+
+    Hardware AEC (acoustic echo cancellation) sits between the mic and
+    the speaker, so the robot's own voice is cancelled before it reaches
+    the STT. That means we do NOT need audio gating or TTS-action
+    monitoring on the GoogleCloudStream path — the recognizer can stay
+    open while the robot is talking, which lets the user barge in.
+
+    Two recognizer backends are selectable via "use_webrtcvad":
+
+      * false (default): ros_speech_recognition + GoogleCloudStream,
+        continuous mode in ja-JP. Subscribes directly to raw audio.
+        No mux, no is_speaking, no tts_action_names monitoring.
+
+      * true: legacy pipeline. webrtcvad_ros chunks speech and
+        respeaker_ros/speech_to_text recognizes each chunk. webrtcvad has
+        no in-node self-cancellation, so we still gate the audio with
+        input_audio_mux + is_speaking even when AEC is present (without
+        the gate, the energy-based chunker can over-trigger on residual
+        playback).
+
+    Sub-module defaults track use_webrtcvad: mux and is_speaking only come
+    up in the webrtcvad path. They can still be forced on/off via the
+    "launch_*" flags.
+  -->
+
+  <!-- ===== Topic names ===== -->
+  <arg name="raw_audio_topic" default="/audio" doc="Raw audio from microphone (respeaker)." />
+  <arg name="dummy_audio_topic" default="/dummy_audio" doc="Silent audio used while the robot is speaking (webrtcvad path only)." />
+  <arg name="audio_topic" default="/input_audio" doc="Gated audio fed into the webrtcvad path." />
+  <arg name="audio_info_topic" default="/audio_info" doc="Audio info topic. Used by webrtcvad backend." />
+  <arg name="voice_topic" default="/speech_to_text" doc="Recognized text topic." />
+  <arg name="robotsound_status_topic" default="/robotsound_jp/status"
+       doc="sound_play action status topic used by is_speaking." />
+
+  <!-- ===== Backend selection ===== -->
+  <arg name="use_webrtcvad" default="false"
+       doc="true: legacy webrtcvad_ros + respeaker_ros pipeline. false: ros_speech_recognition GoogleCloudStream continuous mode." />
+
+  <!-- ===== Sub-module enable flags (defaults tied to use_webrtcvad) ===== -->
+  <arg name="launch_respeaker" default="true"
+       doc="Launch respeaker_node here (set false if the caller already starts it)." />
+  <arg name="launch_is_speaking" default="$(arg use_webrtcvad)"
+       doc="Launch is_speaking node here. Only needed for the webrtcvad path (audio mux gate)." />
+  <arg name="launch_audio_mux" default="$(arg use_webrtcvad)"
+       doc="Launch input_audio_mux + mux_selector here. Only needed for the webrtcvad path; GoogleCloudStream self-cancels in-node." />
+
+  <!-- ===== Speech recognition common args ===== -->
+  <arg name="language" default="ja-JP" />
+  <!-- Hardware AEC removes the robot's own voice from the mic input, so
+       neither backend needs to listen for TTS state. Keep self-cancellation
+       off so the user can barge in while the robot is speaking. -->
+  <arg name="self_cancellation" default="false" />
+  <arg name="tts_tolerance" default="0.5" />
+  <arg name="tts_action_names" default="['sound_play']"
+       doc="Only consulted when self_cancellation is true." />
+
+  <arg name="google_cloud_credentials_json"
+       default="/home/kashiwagi/config/eternal-byte-236613-4bc6962824d1.json" />
+
+  <!-- ===== Audio format (used by ros_speech_recognition backend) ===== -->
+  <arg name="n_channel" default="1" />
+  <arg name="depth" default="16" />
+  <arg name="sample_rate" default="16000" />
+
+  <!-- ===== webrtcvad backend specific args ===== -->
+  <arg name="webrtcvad_aggressiveness" default="3" />
+
+  <!-- ===== ros_speech_recognition backend specific args ===== -->
+  <arg name="engine" default="GoogleCloudStream" />
+  <arg name="continuous" default="true" />
+  <arg name="auto_start" default="true" />
+  <arg name="enable_sound_effect" default="false" />
+
+  <!-- ===== Respeaker (raw audio source) ===== -->
+  <node if="$(arg launch_respeaker)"
+        name="respeaker_node"
+        pkg="respeaker_ros" type="respeaker_node.py"
+        respawn="true" respawn_delay="10">
+    <rosparam>
+      sample_duration: 0.03
+    </rosparam>
+  </node>
+
+  <!-- ===== is_speaking (TTS active-flag publisher) ===== -->
+  <node if="$(arg launch_is_speaking)"
+        name="is_speaking"
+        pkg="sound_play" type="is_speaking.py">
+    <remap from="~robotsound" to="$(arg robotsound_status_topic)" />
+    <remap from="~output/is_speaking" to="is_speaking" />
+  </node>
+
+  <!-- ===== Audio input mux: raw audio while silent, dummy audio while speaking ===== -->
+  <group if="$(arg launch_audio_mux)">
+    <node name="input_audio_mux"
+          pkg="topic_tools" type="mux"
+          respawn="true"
+          args="$(arg audio_topic) $(arg raw_audio_topic) $(arg dummy_audio_topic)">
+      <remap from="mux" to="input_audio_mux" />
+    </node>
+
+    <node name="input_audio_selector"
+          pkg="riberry_startup" type="mux_selector.py"
+          respawn="true"
+          args="/is_speaking 'm.data is False' $(arg raw_audio_topic) /is_speaking 'm.data is True' $(arg dummy_audio_topic)">
+      <remap from="mux" to="input_audio_mux" />
+      <param name="default_select" value="$(arg dummy_audio_topic)" />
+      <param name="wait" value="true" />
+    </node>
+  </group>
+
+  <!-- ===== Legacy: webrtcvad_ros + respeaker_ros/speech_to_text ===== -->
+  <group if="$(arg use_webrtcvad)">
+    <node name="webrtcvad_ros"
+          pkg="riberry_startup" type="webrtcvad_ros.py"
+          output="screen">
+      <rosparam subst_value="true">
+        aggressiveness: $(arg webrtcvad_aggressiveness)
+      </rosparam>
+      <remap from="audio_data" to="$(arg audio_topic)" />
+      <remap from="audio_info" to="$(arg audio_info_topic)" />
+    </node>
+
+    <node name="speech_to_text" pkg="respeaker_ros" type="speech_to_text.py"
+          output="screen">
+      <remap from="audio" to="webrtcvad_ros/speech_audio" />
+      <remap from="speech_to_text" to="$(arg voice_topic)" />
+      <rosparam subst_value="true">
+        language: $(arg language)
+        self_cancellation: $(arg self_cancellation)
+        tts_tolerance: $(arg tts_tolerance)
+        tts_action_names: $(arg tts_action_names)
+        google_cloud_credentials_json: $(arg google_cloud_credentials_json)
+      </rosparam>
+    </node>
+  </group>
+
+  <!-- ===== New: ros_speech_recognition (GoogleCloudStream, continuous) =====
+       Subscribes to raw audio directly (no mux). With self_cancellation off
+       (default), recognition keeps running while the robot is speaking;
+       hardware AEC removes the robot's own voice from the mic input. -->
+  <group unless="$(arg use_webrtcvad)">
+    <node name="speech_recognition"
+          pkg="ros_speech_recognition" type="speech_recognition_node.py"
+          respawn="true"
+          output="screen">
+      <rosparam subst_value="true">
+        audio_topic: $(arg raw_audio_topic)
+        voice_topic: $(arg voice_topic)
+        n_channel: $(arg n_channel)
+        depth: $(arg depth)
+        sample_rate: $(arg sample_rate)
+        engine: $(arg engine)
+        language: $(arg language)
+        continuous: $(arg continuous)
+        auto_start: $(arg auto_start)
+        enable_sound_effect: $(arg enable_sound_effect)
+        self_cancellation: $(arg self_cancellation)
+        tts_tolerance: $(arg tts_tolerance)
+        tts_action_names: $(arg tts_action_names)
+        google_cloud_credentials_json: $(arg google_cloud_credentials_json)
+      </rosparam>
+    </node>
+  </group>
+</launch>
