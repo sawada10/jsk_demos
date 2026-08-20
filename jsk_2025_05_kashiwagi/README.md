@@ -38,6 +38,10 @@ repositories:
     type: git
     url: git@github.com:sawada10/jsk_3rdparty.git
     version: kashiwagi
+  audio_common:
+    type: git
+    url: https://github.com/iory/audio_common.git
+    version: publish-playback-audio
   kashiwagi_kuromitsu:
     type: git
     url: https://github.com/a-ichikura/kashiwagi_kuromitsu.git
