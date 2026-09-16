@@ -9,35 +9,38 @@
 
   <param name="robot_name" value="kashiwagi" />
 
-  <!-- respeaker -->
-  <node name="respeaker_node"
-	pkg="respeaker_ros" type="respeaker_node.py"
-        respawn="true" respawn_delay="10" >
-    <rosparam>
-      sample_duration: 0.03
-    </rosparam>
-  </node>
+  <!-- respeaker (no aec) -->
+  <!-- <node name="respeaker_node" -->
+  <!-- 	pkg="respeaker_ros" type="respeaker_node.py" -->
+  <!--       respawn="true" respawn_delay="10" > -->
+  <!--   <rosparam> -->
+  <!--     sample_duration: 0.03 -->
+  <!--   </rosparam> -->
+  <!-- </node> -->
 
-  <node name="webrtcvad_ros"
-        pkg="riberry_startup" type="webrtcvad_ros.py"	
-        output="screen" >
-    <rosparam>
-      aggressiveness: 3
-    </rosparam>
-    <remap from="audio_data" to="$(arg audio_topic)" />
-    <remap from="audio_info" to="$(arg audio_info_topic)" />
-  </node>
-  nnnn
-  <node name="speech_to_text" pkg="respeaker_ros" type="speech_to_text.py"
-        output="screen">
-    <remap from="audio" to="webrtcvad_ros/speech_audio"  />    
-    <rosparam subst_value="true">
-      language: $(arg language)
-      self_cancellation: $(arg self_cancellation)
-      tts_tolerance: 0.5
-      google_cloud_credentials_json: /home/kashiwagi/config/eternal-byte-236613-4bc6962824d1.json
-    </rosparam>
-  </node>
+  <!-- <node name="webrtcvad_ros" -->
+  <!--       pkg="riberry_startup" type="webrtcvad_ros.py"	 -->
+  <!--       output="screen" > -->
+  <!--   <rosparam> -->
+  <!--     aggressiveness: 3 -->
+  <!--   </rosparam> -->
+  <!--   <remap from="audio_data" to="$(arg audio_topic)" /> -->
+  <!--   <remap from="audio_info" to="$(arg audio_info_topic)" /> -->
+  <!-- </node> -->
+  
+  <!-- <node name="speech_to_text" pkg="respeaker_ros" type="speech_to_text.py" -->
+  <!--       output="screen"> -->
+  <!--   <remap from="audio" to="webrtcvad_ros/speech_audio"  />     -->
+  <!--   <rosparam subst_value="true"> -->
+  <!--     language: $(arg language) -->
+  <!--     self_cancellation: $(arg self_cancellation) -->
+  <!--     tts_tolerance: 0.5 -->
+  <!--     google_cloud_credentials_json: /home/kashiwagi/config/eternal-byte-236613-4bc6962824d1.json -->
+  <!--   </rosparam> -->
+  <!-- </node> -->
+
+  <!-- respeaker with aec -->
+  <include file="$(find jsk_2025_05_kashiwagi)/launch/speech_recognition_ros_aec.launch"/>
   
   <!-- voicevox with docker -->
   <include file="$(find voicevox)/launch/voicevox_texttospeech.launch">
