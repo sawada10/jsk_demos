@@ -70,28 +70,23 @@ class NounReadingPublisher:
             self.clear_word_file()
             return
 
-        ok, hira = self._noun_only_hiragana_reading(spoken_word)
-        if not ok or not hira:
-            return
-
-        # ★追加：「ん」で終わる単語は受け付けない（publishしないで次を待つ）
-        if self._ends_with_n(hira):
-            rospy.loginfo(f"Blocked (ends with ん): spoken_word='{spoken_word}' reading='{hira}'")
+        noun_readings = self._noun_hiragana_readings(spoken_word)
+        if not noun_readings:
+            print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
             return
 
         target_initial, raw_word = self._load_last_char_with_debug()
-
-        if target_initial is None or self._is_allowed_start(hira, target_initial):
-            self.pub.publish(String(data=hira))
-            rospy.loginfo(
-                f"Published: spoken_word='{spoken_word}' reading='{hira}' "
-                f"target='{target_initial}' from_file_word='{raw_word}'"
-            )
-        else:
-            rospy.loginfo(
-                f"Blocked: spoken_word='{spoken_word}' reading='{hira}' "
-                f"target='{target_initial}' from_file_word='{raw_word}'"
-            )
+        
+        for hira in reversed(noun_readings):
+            if self._ends_with_n(hira):
+                continue
+            if target_initial is None or self._is_allowed_start(hira, target_initial):
+                self.pub.publish(String(data=hira))
+                rospy.loginfo(f"Published: spoken_word='{spoken_word}' reading='{hira}'"
+                              f"target='{target_initial}' from_file_word='{raw_word}'"
+                              )
+                return
+        rospy.loginfo(f"Blocked: no valid noun in '{spoken_word}'")
 
     def _ends_with_n(self, hira: str) -> bool:
         hira = (hira or "").strip()
@@ -147,32 +142,28 @@ class NounReadingPublisher:
 
         return False
 
-    def _noun_only_hiragana_reading(self, text: str):
+    def _noun_hiragana_readings(self, text: str):
         tokens = list(self.tagger(text))
-        if not tokens:
-            return False, ""
+        readings = []
 
         for t in tokens:
             pos1 = getattr(t.feature, "pos1", None)
             if pos1 != "名詞":
-                return False, ""
+                continue
 
-        kana_parts = []
-        for t in tokens:
             kana = (
                 getattr(t.feature, "reading", None)
                 or getattr(t.feature, "kana", None)
                 or getattr(t.feature, "pron", None)
                 or ""
             )
-            kana_parts.append(kana)
 
-        kana = "".join(kana_parts).strip()
-        if not kana:
-            return True, ""
+            if not kana:
+                continue
 
-        hira = jaconv.kata2hira(kana)
-        return True, hira
+            readings.append(jaconv.kata2hira(kana))
+            
+        return readings
 
 
 if __name__ == "__main__":
