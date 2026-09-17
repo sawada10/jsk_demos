@@ -26,6 +26,7 @@
   -->
 
   <arg name="voice_topic" default="/speech_to_text" />
+  <arg name="raw_voice_topic" default="/speech_to_text/raw" />
   <arg name="language" default="ja-JP" />
   <arg name="google_cloud_credentials_json"
        default="/home/kashiwagi/config/eternal-byte-236613-4bc6962824d1.json" />
@@ -91,7 +92,8 @@
         respawn="true" output="screen">
     <rosparam subst_value="true">
       audio_topic: /aec/output
-      voice_topic: $(arg voice_topic)
+      <!-- voice_topic: $(arg voice_topic) -->
+      voice_topic: $(arg raw_voice_topic)
       n_channel: 1
       depth: 16
       sample_rate: 16000

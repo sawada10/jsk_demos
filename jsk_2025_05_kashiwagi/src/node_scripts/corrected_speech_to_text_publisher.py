@@ -14,7 +14,7 @@ class CorrectedSpeechToTextPublisher:
         self.corrector = DSPyCorrector()
         self.history=deque(maxlen=6)
         self.pub = rospy.Publisher("/corrected_speech_to_text", SpeechRecognitionCandidates, queue_size=10)
-        self.sub = rospy.Subscriber("/speech_to_text", SpeechRecognitionCandidates, self.callback, queue_size=10)
+        self.sub = rospy.Subscriber("/speech_to_text/raw", SpeechRecognitionCandidates, self.callback, queue_size=10)
         
         self.min_wait_time_for_next_asr_result = 0.8
         self.max_wait_time_for_next_asr_result = 2.0
@@ -116,7 +116,8 @@ class CorrectedSpeechToTextPublisher:
         print(f"history = {self.history}")
         
         corrected_msg = SpeechRecognitionCandidates()
-        corrected_text = self.corrector.correct(text_to_process, self.history)
+        #corrected_text = self.corrector.correct(text_to_process, self.history)
+        corrected_text = text_to_process
         corrected_msg.transcript = [corrected_text]
         self.history.append(f"User: {corrected_text}")
 
