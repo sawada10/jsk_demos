@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propose Game</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; background: #ececec; }
+    body { display: flex; justify-content: center; align-items: center; }
+    .screen { width: 100vw; height: 100vh; background: #e8dfc4; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; box-sizing: border-box; padding: 24px; transition: background 0.8s ease; }
+    #status { position: fixed; top: 12px; left: 12px; z-index: 20; padding: 4px 8px; border-radius: 8px; background: rgba(255,255,255,0.72); color: #666; font-family: sans-serif; font-size: 14px; }
+    #message { height: 42px; margin-bottom: 22px; color: #555; font-size: 22px; letter-spacing: 0.08em; opacity: 1; transition: opacity 0.5s ease; }
+    #message.hidden { opacity: 0; }
+    #cards { width: 94%; display: flex; justify-content: center; align-items: center; align-content: center; flex-wrap: wrap; gap: 32px; transition: opacity 0.5s ease, transform 0.5s ease; }
+    #cards.fade-out { opacity: 0; transform: scale(0.96); }
+    .chunk { display: flex; justify-content: center; align-items: center; flex-wrap: nowrap; gap: 5px; }
+    .card { --angle: 0deg; width: 130px; height: 88px; position: relative; display: flex; justify-content: center; align-items: center; flex-shrink: 0; box-sizing: border-box; padding: 10px 8px 18px 8px; border: 1px solid rgba(0,0,0,0.18); border-radius: 4px; box-shadow: 0 7px 14px rgba(0,0,0,0.18); font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; font-size: 22px; font-weight: 500; letter-spacing: 0.02em; line-height: 1.2; text-align: center; word-break: break-word; overflow-wrap: anywhere; transform: rotate(var(--angle)); transform-origin: center center; user-select: none; }
+    .card.small-text { font-size: 18px; }
+    .card.xsmall-text { font-size: 15px; }
+    .card.green { background: #3f7550; color: white; }
+    .card.white { background: #f8f7ef; color: #222; }
+    .card::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 10px; height: 1.5px; background: currentColor; opacity: 0.82; }
+
+    .card.scan-appear { animation: scanAppear 0.5s ease-out both; }
+    @keyframes scanAppear {
+      0% { opacity: 0; transform: translateY(28px) scale(0.82) rotate(var(--angle)); }
+      70% { opacity: 1; transform: translateY(-4px) scale(1.04) rotate(var(--angle)); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(var(--angle)); }
+    }
+
+    #cards.thinking .card { animation: thinkingFloat 2.2s ease-in-out infinite; }
+    #cards.thinking .card:nth-child(2n) { animation-delay: -0.4s; }
+    #cards.thinking .card:nth-child(3n) { animation-delay: -0.8s; }
+    #cards.thinking .card:nth-child(4n) { animation-delay: -1.2s; }
+    @keyframes thinkingFloat {
+      0%, 100% { transform: translateY(0) rotate(var(--angle)); box-shadow: 0 7px 14px rgba(0,0,0,0.18); }
+      50% { transform: translateY(-10px) rotate(var(--angle)); box-shadow: 0 14px 24px rgba(0,0,0,0.22); }
+    }
+
+    .thinking-dots::after { content: ""; animation: dots 1.4s steps(4, end) infinite; }
+    @keyframes dots {
+      0% { content: ""; }
+      25% { content: "・"; }
+      50% { content: "・・"; }
+      75%, 100% { content: "・・・"; }
+    }
+
+    .card.final-appear { opacity: 0; animation: finalAppear 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+    @keyframes finalAppear {
+      0% { opacity: 0; transform: translateY(18px) scale(0.9) rotate(var(--angle)); }
+      70% { opacity: 1; transform: translateY(-3px) scale(1.03) rotate(var(--angle)); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(var(--angle)); }
+    }
+
+    @media (max-width: 900px) {
+      .screen { padding: 14px; }
+      #cards { width: 98%; gap: 22px; }
+      .chunk { gap: 4px; }
+      .card { width: 104px; height: 72px; padding: 7px 6px 15px 6px; font-size: 18px; }
+      .card.small-text { font-size: 15px; }
+      .card.xsmall-text { font-size: 12px; }
+      #message { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="status">connecting...</div>
+  <div class="screen">
+    <div id="message">カードをスキャンしてください</div>
+    <div id="cards"></div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const cardsEl = document.getElementById("cards");
+    const messageEl = document.getElementById("message");
+    const socket = new WebSocket(`ws://${location.hostname}:9090`);
+    let displayedScanCount = 0;
+    let thinking = false;
+
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+    function isInitialCard(id) { return typeof id === "string" && id.startsWith("group"); }
+
+    function makeCard(text, id, index, animation = "") {
+      const div = document.createElement("div");
+      div.className = `card ${isInitialCard(id) ? "green" : "white"}`;
+      if (animation) div.classList.add(animation);
+      if (text.length >= 12) div.classList.add("xsmall-text");
+      else if (text.length >= 8) div.classList.add("small-text");
+      const angles = [-3, -1.5, 1, 2.5, -1, 1.5, -2, 3];
+      div.style.setProperty("--angle", `${angles[index % angles.length]}deg`);
+      div.textContent = text;
+      return div;
+    }
+
+    function startThinking() {
+      thinking = true;
+      messageEl.classList.remove("hidden");
+      messageEl.innerHTML = '<span class="thinking-dots">プロポーズを考えています</span>';
+      cardsEl.classList.add("thinking");
+    }
+
+    function renderScanProgress(result) {
+      const cards = result.cards || [];
+      const count = result.count || 0;
+      const target = result.target || 6;
+      if (!thinking) messageEl.textContent = `${count} / ${target}`;
+
+      while (displayedScanCount < cards.length) {
+        const card = cards[displayedScanCount];
+        cardsEl.appendChild(makeCard(card.text, card.id, displayedScanCount, "scan-appear"));
+        displayedScanCount++;
+      }
+
+      if (count >= target && !thinking) setTimeout(startThinking, 450);
+    }
+
+    async function renderProposal(result) {
+      thinking = false;
+      messageEl.textContent = "完成";
+      cardsEl.classList.remove("thinking");
+      cardsEl.classList.add("fade-out");
+      await sleep(550);
+
+      cardsEl.innerHTML = "";
+      cardsEl.classList.remove("fade-out");
+
+      let cardIndex = 0;
+      const chunks = result.chunks || [];
+
+      if (chunks.length > 0) {
+        for (const chunk of chunks) {
+          const chunkEl = document.createElement("div");
+          chunkEl.className = "chunk";
+          const ids = chunk.ids || [];
+          const texts = chunk.texts || [];
+
+          texts.forEach((text, i) => {
+            const card = makeCard(text, ids[i], cardIndex, "final-appear");
+            card.style.animationDelay = `${cardIndex * 90}ms`;
+            chunkEl.appendChild(card);
+            cardIndex++;
+          });
+
+          cardsEl.appendChild(chunkEl);
+        }
+      } else {
+        const texts = [...(result.proposal || "").matchAll(/"([^"]+)"/g)].map(m => m[1]);
+        const ids = result.ids || [];
+        const chunkEl = document.createElement("div");
+        chunkEl.className = "chunk";
+
+        texts.forEach((text, i) => {
+          const card = makeCard(text, ids[i], i, "final-appear");
+          card.style.animationDelay = `${i * 90}ms`;
+          chunkEl.appendChild(card);
+        });
+
+        cardsEl.appendChild(chunkEl);
+      }
+
+      await sleep(cardIndex * 90 + 900);
+      messageEl.classList.add("hidden");
+    }
+
+    socket.onopen = () => {
+      statusEl.textContent = "connected";
+      socket.send(JSON.stringify({op: "subscribe", topic: "/propose_game_scan_progress", type: "std_msgs/String"}));
+      socket.send(JSON.stringify({op: "subscribe", topic: "/propose_game_response", type: "std_msgs/String"}));
+    };
+
+    socket.onmessage = event => {
+      const rosMessage = JSON.parse(event.data);
+      if (rosMessage.op !== "publish") return;
+
+      try {
+        if (rosMessage.topic === "/propose_game_scan_progress") renderScanProgress(JSON.parse(rosMessage.msg.data));
+        if (rosMessage.topic === "/propose_game_response") renderProposal(JSON.parse(rosMessage.msg.data));
+      } catch (e) {
+        console.error("Failed to parse response:", e);
+      }
+    };
+
+    socket.onerror = event => {
+      console.log("WebSocket error:", event);
+      statusEl.textContent = "connection error";
+    };
+
+    socket.onclose = event => {
+      console.log("WebSocket closed:", event.code, event.reason);
+      statusEl.textContent = `disconnected (${event.code})`;
+    };
+  </script>
+</body>
+</html>
