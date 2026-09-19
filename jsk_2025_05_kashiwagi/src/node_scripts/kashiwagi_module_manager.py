@@ -47,6 +47,13 @@ class ModuleManager:
             "free_talk:speaking_turn": (0, 225, 78),
             "free_talk:happy": (255, 110, 243),
             "free_talk:thinking_turn": (255, 110, 243),
+            "propose_game:starting": (225, 110, 243),
+            "propose_game:playing": (255, 255, 40),
+            "propose_game:ready_to_speak": (225, 168, 40),
+            "propose_game:thinking_turn": (255, 255, 40),
+            "propose_game:preparing_speech": (225, 255, 40),
+            "propose_game:speaking_turn": (0, 225, 78),
+            "propose_game:happy": (255, 110, 243),
         }
 
         self.cheek_led_color_map = {
@@ -72,6 +79,12 @@ class ModuleManager:
             "free_talk:starting": (225, 110, 243),
             "free_talk:speaking_turn": (255, 130, 255),
             "free_talk:happy": (255, 110, 243),
+            "propose_game:starting": (225, 110, 243),
+            "propose_game:thinking_turn": (255, 40, 40),
+            "propose_game:ready_to_speak": (255, 40, 40),
+            "propose_game:speaking_turn": (255, 35, 140),
+            "propose_game:preparing_speech": (255, 40, 40),
+            "propose_game:happy": (255, 110, 243),
         }
 
         self.eye_map = {
@@ -105,6 +118,11 @@ class ModuleManager:
             "free_talk:speaking_turn": "normal",
             "free_talk:happy": "happy",
             "free_talk:thinking": "normal",
+            "propose_game:starting": "happy",
+            "propose_game:playing": "normal",
+            "propose_game:speaking_turn": "delighted",
+            "propose_game:happy": "expecting",
+            "propose_game:thinking_turn": "normal",
         }
 
         rospy.Subscriber('/kashiwagi_state', String, self.state_callback, queue_size=1)

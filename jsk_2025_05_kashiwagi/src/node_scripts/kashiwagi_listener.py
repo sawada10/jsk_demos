@@ -165,6 +165,11 @@ class Listener:
             self.after_speech_req_state = None
             self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_iiyo.wav"
 
+        elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["プロポーズ"]):
+            self.during_speech_req_state = "propose_game:starting"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_iiyo.wav"
+
         elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["おしゃべり", "お喋り"]):
             self.during_speech_req_state = "free_talk:starting"
             self.after_speech_req_state = None
@@ -354,6 +359,44 @@ class Listener:
             self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_yahho.wav"
 
 #####################
+
+        elif self.cur_kashiwagi_state == "propose_game:ready_to_speak" and self.is_mentioned(spoken_word, ["柏木さんのプロポーズ"]):
+            self.during_speech_req_state = "propose_game:speaking_turn"
+            self.after_speech_req_state = None
+            self.sound_file = None
+
+        elif self.cur_kashiwagi_state == "propose_game:playing" and self.is_mentioned(spoken_word, ["こんにちは", "こんにち"]):
+            self.during_speech_req_state = "propose_game:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_konnichiwa.wav"
+            
+        elif self.cur_kashiwagi_state == "propose_game:playing" and self.is_mentioned(spoken_word, ["かわいい", "可愛い"]):
+            self.during_speech_req_state = "propose_game:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_ehehe.wav"
+
+        elif self.cur_kashiwagi_state == "propose_game:playing" and self.is_mentioned(spoken_word, ["おはよう"]):
+            self.during_speech_req_state = "propose_game:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_ohayou.wav"
+            
+        elif self.cur_kashiwagi_state in ["propose_game:playing", "propose_game:speaking_turn", "propose_game:ready_to_speak", "propose_game:thinking_turn"] and self.is_mentioned(spoken_word, ["おわり", "終わり"]):
+            self.during_speech_req_state = "daily:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_tanoshikattane.wav"
+
+        elif self.cur_kashiwagi_state == "propose_game:playing" and self.is_mentioned(spoken_word, ["ありがとう", "ありがと"]):
+            self.during_speech_req_state = "propose_game:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_arigato.wav"
+
+        elif self.cur_kashiwagi_state == "propose_game:playing" and self.is_mentioned(spoken_word, ["やっほー", "ヤッホー"]):
+            self.during_speech_req_state = "propose_game:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_yahho.wav"
+
+######################
+
             
         elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["どんぐり", "ドングリ", "ころころ", "コロコロ"]):
             self.during_speech_req_state = "daily:singing"
@@ -490,7 +533,6 @@ class Listener:
             self.after_speech_req_state = None
             self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_pippidayo.wav"
             
-
         else:
             self.during_speech_req_state = None
             self.after_speech_req_state = None

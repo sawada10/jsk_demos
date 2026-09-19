@@ -8,7 +8,7 @@ class StateAutoResetter:
         rospy.init_node("kashiwagi_state_resetter")
         rospy.sleep(1)
 
-        self.target_states = ["daily:happy", "daily:waking_up", "daily:goodbye", "daily:time_signal", "talking_game:starting", "talking_game:happy", "move:surprised", "katakanashi:starting", "katakanashi:happy", "move:happy", "move:goal", "shiritori:starting", "shiritori:happy", "free_talk:starting", "free_talk:happy"]
+        self.target_states = ["daily:happy", "daily:waking_up", "daily:goodbye", "daily:time_signal", "talking_game:starting", "talking_game:happy", "move:surprised", "katakanashi:starting", "katakanashi:happy", "move:happy", "move:goal", "shiritori:starting", "shiritori:happy", "free_talk:starting", "free_talk:happy", "propose_game:happy", "propose_game:starting"]
         self.timeout_duration = rospy.Duration(5.0)  # 5秒
 
         self.cur_state = "unknown"
@@ -41,6 +41,8 @@ class StateAutoResetter:
                 req_state = "katakanashi:playing"
             elif self.cur_state in ["shiritori:starting", "shiritori:happy"]:
                 req_state = "shiritori:listening_turn"
+            elif self.cur_state in ["propose_game:starting", "propose_game:happy"]:
+                req_state = "propose_game:playing"
             elif self.cur_state in ["free_talk:starting", "free_talk:happy"]:
                 req_state = "free_talk:listening_turn"
             elif self.cur_state in ["move:happy", "move:goal"]:

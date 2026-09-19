@@ -50,6 +50,8 @@ class KashiwagiSpeaker:
                 self.last_play_time = time.time()
             elif self.cur_state == "move:getting_lost":
                 wav_file = f"{self.path_to_pkg}/data/kashiwagi_megamawaru.wav"
+            elif self.cur_state == "propose_game:ready_to_speak":
+                wav_file = f"{self.path_to_pkg}/data/kashiwagi_dekita.wav"
             elif self.cur_state == "free_talk:thinking_turn":
                 wav_file = f"{self.path_to_pkg}/data/kashiwagi_thinking_2.wav"
             elif self.cur_state == "move:goal":
@@ -77,6 +79,10 @@ class KashiwagiSpeaker:
                 "interval": 5.0,
             },
             "shiritori:thinking_turn": {
+                "wav": thinking_wav_file,
+                "interval": 8.0,
+            },
+            "propose_game:thinking_turn": {
                 "wav": thinking_wav_file,
                 "interval": 8.0,
             },

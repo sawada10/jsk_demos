@@ -190,6 +190,11 @@
 
   <!-- card interaction -->
   <node pkg="jsk_2025_05_kashiwagi" type="kashiwagi_card_interaction.py" name="kashiwagi_card_interaction" output="screen"/>
-  
+
+  <!-- propose game trigger -->
+  <node pkg="jsk_2025_05_kashiwagi" type="propose_game_speech_trigger.py" name="propose_game_speech_trigger.py" output="screen"/>
+
+  <!-- propose game main -->
+  <node pkg="jsk_2025_05_kashiwagi" type="propose_game_response_generator.py" name="propose_game_response_generator" output="screen"/>
   
 </launch>

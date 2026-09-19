@@ -18,6 +18,7 @@ class ResponseSpeakerWithAction:
         rospy.loginfo("Waiting for sound_play action server...")
         self.client.wait_for_server()
         self.set_state_srv = rospy.ServiceProxy('/set_kashiwagi_state', SetKashiwagiState)
+        self.current_kashiwagi_state = "unknown"
         rospy.Subscriber('/kashiwagi_state', String, self.state_callback, queue_size=1)
         self.is_speaking = False
         rospy.loginfo("Connected to sound_play action server.")
@@ -43,12 +44,17 @@ class ResponseSpeakerWithAction:
                 resp = self.set_state_srv("shiritori:listening_turn")
             elif self.current_kashiwagi_state.split(":")[0] == "free_talk":
                 resp = self.set_state_srv("free_talk:listening_turn")
+            elif self.current_kashiwagi_state.split(":")[0] == "propose_game":
+                resp = self.set_state_srv("propose_game:happy")
+            else:
+                rospy.logwarn(f"Unknown Kashiwagi state after speech: {self.current_kashiwagi_state}")
+                return
             rospy.loginfo(f"State updated: {resp.message}" if resp.success else f"State update failed: {resp.message}")
         except rospy.ServiceException as e:
             rospy.logerr(f"Service call failed: {e}")
 
     def _feedback_cb(self, state):
-        if (self.is_speaking == False):
+        if self.is_speaking == False:
             try:
                 if self.current_kashiwagi_state.split(":")[0] == "talking_game":
                     resp = self.set_state_srv("talking_game:speaking_turn")
@@ -58,55 +64,50 @@ class ResponseSpeakerWithAction:
                     resp = self.set_state_srv("shiritori:speaking_turn")
                 elif self.current_kashiwagi_state.split(":")[0] == "free_talk":
                     resp = self.set_state_srv("free_talk:speaking_turn")
+                elif self.current_kashiwagi_state.split(":")[0] == "propose_game":
+                    resp = self.set_state_srv("propose_game:speaking_turn")
+                else:
+                    rospy.logwarn(f"Unknown Kashiwagi state while speaking: {self.current_kashiwagi_state}")
+                    self.is_speaking = True
+                    return
                 rospy.loginfo(f"State updated: {resp.message}" if resp.success else f"State update failed: {resp.message}")
             except rospy.ServiceException as e:
                 rospy.logerr(f"Service call failed: {e}")
         self.is_speaking = True
 
     def generate_wav_and_play_sound_file(self, msg):
+        rospy.loginfo(f"speech trigger received: {msg.data}")
         cmd = ["rosrun", "voicevox", "text2wave", "-o", self.wav_file_path, self.text_path, "-eval", "(3)"]
         rospy.loginfo("Running VoiceVox text2wave...")
-        print("aaaaaaaaaaaaaaaaaaaaaaaaa")
         result = subprocess.run(cmd, capture_output=True, text=True)
-        print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
-        
+
         if result.returncode != 0:
             rospy.logerr(f"VoiceVox error:\n{result.stderr}")
             return
-        else:
-            rospy.loginfo("VoiceVox processing complete!")
+        rospy.loginfo("VoiceVox processing complete!")
 
         if os.path.exists(self.wav_file_path):
             goal = SoundRequestGoal()
-            goal.sound_request.sound = SoundRequest.PLAY_FILE  # ファイル再生モード
-            goal.sound_request.command = SoundRequest.PLAY_ONCE  # 一回だけ再生
-            goal.sound_request.arg = self.wav_file_path  # 再生する wav ファイルのパス
-            goal.sound_request.volume = 1.0     # 音量（0.0〜1.0）
-            self.client.send_goal(goal,
-                                  done_cb=self._done_cb,
-                                  feedback_cb=self._feedback_cb)
+            goal.sound_request.sound = SoundRequest.PLAY_FILE
+            goal.sound_request.command = SoundRequest.PLAY_ONCE
+            goal.sound_request.arg = self.wav_file_path
+            goal.sound_request.volume = 1.0
+            self.client.send_goal(goal, done_cb=self._done_cb, feedback_cb=self._feedback_cb)
             self.client.wait_for_result()
             rospy.loginfo("Playback finished.")
         else:
             rospy.logerr("WAV file not found!")
-        
+
     def say_text(self, msg):
         text = msg.data.replace("\n", "")
         rospy.loginfo(f"Talking contents: {text}")
-
         goal = SoundRequestGoal()
         goal.sound_request.sound = SoundRequest.SAY
         goal.sound_request.command = SoundRequest.PLAY_ONCE
         goal.sound_request.arg = text
         goal.sound_request.arg2 = "ずんだもん-ノーマル"
         goal.sound_request.volume = 1.0
-
-        # 音声再生を送信
-        self.client.send_goal(goal,
-                              done_cb=self._done_cb,
-                              feedback_cb=self._feedback_cb)
-        
-        # 表情アニメーションを喋ってる間だけ繰り返す（wait_for_result中）
+        self.client.send_goal(goal, done_cb=self._done_cb, feedback_cb=self._feedback_cb)
         rate = rospy.Rate(10)
         while not self.client.wait_for_result(timeout=rospy.Duration(0.1)):
             rate.sleep()
