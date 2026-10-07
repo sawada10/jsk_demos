@@ -3,6 +3,7 @@ import rospy
 import os
 import json
 import random
+import re
 import rospkg
 from itertools import combinations
 from std_msgs.msg import String, Float32
@@ -28,29 +29,34 @@ class ResponseGenerator:
         self.child_blocked_ids = {512, 632, 635, 638}
 
         self.initial_cards = {
-            "group1":[{"id":"group1-a","text":"君にとって"},{"id":"group1-b","text":"君の"},{"id":"group1-c","text":"君と"},{"id":"group1-d","text":"君だけの"},{"id":"group1-e","text":"君を"}],
+            "group1":[{"id":"group1-a","text":"{君|きみ}にとって"},{"id":"group1-b","text":"{君|きみ}の"},{"id":"group1-c","text":"{君|きみ}と"},{"id":"group1-d","text":"{君|きみ}だけの"},{"id":"group1-e","text":"{君|きみ}を"}],
             "group2":[{"id":"group2-a","text":"僕にとって"},{"id":"group2-b","text":"僕の"},{"id":"group2-c","text":"僕と"},{"id":"group2-d","text":"僕だけの"},{"id":"group2-e","text":"僕を"}],
             "group3":[{"id":"group3-a","text":"僕に"},{"id":"group3-b","text":"僕"},{"id":"group3-c","text":"僕が"},{"id":"group3-d","text":"僕も"},{"id":"group3-e","text":"僕は"}],
-            "group4":[{"id":"group4-a","text":"君に"},{"id":"group4-b","text":"君"},{"id":"group4-c","text":"君が"},{"id":"group4-d","text":"君も"},{"id":"group4-e","text":"君は"}],
+            "group4":[{"id":"group4-a","text":"{君|きみ}に"},{"id":"group4-b","text":"{君|きみ}"},{"id":"group4-c","text":"{君|きみ}が"},{"id":"group4-d","text":"{君|きみ}も"},{"id":"group4-e","text":"{君|きみ}は"}],
             "group5":[{"id":"group5-a","text":"だけの"},{"id":"group5-b","text":"に"},{"id":"group5-c","text":"を"},{"id":"group5-d","text":"より"},{"id":"group5-e","text":"が"},{"id":"group5-f","text":"と"},{"id":"group5-g","text":"は"},{"id":"group5-h","text":"の"}],
             "group6":[{"id":"group6-a","text":"大切にするよ"},{"id":"group6-b","text":"愛してる"}]
         }
 
         self.word_map = {}
+        self.speech_word_map = {}
         try:
             with open(self.json_path, encoding="utf-8") as f:
                 data = json.load(f)
             for item in data:
-                self.word_map[int(item["id"])] = item["text"]
+                raw_text = item["text"]
+                self.word_map[int(item["id"])] = self.to_display_text(raw_text)
+                self.speech_word_map[int(item["id"])] = self.to_speech_text(raw_text)
             rospy.loginfo(f"succeeded in reading json: {len(self.word_map)} entries")
         except Exception as e:
             rospy.logerr(f"failed to read json: {e}")
             return
 
         self.initial_card_map = {}
+        self.initial_speech_card_map = {}
         for cards in self.initial_cards.values():
             for card in cards:
-                self.initial_card_map[card["id"]] = card["text"]
+                self.initial_card_map[card["id"]] = self.to_display_text(card["text"])
+                self.initial_speech_card_map[card["id"]] = self.to_speech_text(card["text"])
 
         self.modifier_texts = {"消すことのできない","濡れた","ぽっかり空いた","命よりも大切な","本当の","終わらない","強がりな","おしとやかな","幸せな","誰も知らない","美しい","可愛い","あの日見た","じゃじゃ馬な","まぶしい"}
         self.adverb_texts = {"きっと","超","誰よりも","まるで","鬼のように","まったり","激しく","一瞬で","死ぬまで","これからもずっと","永久に","一緒に","スーパー","心から","マジ","世界一","絶対に","そろそろ"}
@@ -66,6 +72,12 @@ class ResponseGenerator:
         rospy.Subscriber("/kashiwagi_state", String, self.state_callback, queue_size=1)
         rospy.loginfo("Propose Game Response Generator started")
         rospy.spin()
+
+    def to_display_text(self, text):
+        return re.sub(r"\{([^{}|]+)\|([^{}]+)\}", lambda m: m.group(1), text)
+
+    def to_speech_text(self, text):
+        return re.sub(r"\{([^{}|]+)\|([^{}]+)\}", lambda m: m.group(2), text)
 
     def state_callback(self, msg):
         old_state = self.cur_state
@@ -183,6 +195,10 @@ class ResponseGenerator:
     def get_card_text(self, card_id):
         card_id = str(card_id)
         return self.initial_card_map[card_id] if card_id.startswith("group") else self.word_map[int(card_id)]
+
+    def get_speech_card_text(self, card_id):
+        card_id = str(card_id)
+        return self.initial_speech_card_map[card_id] if card_id.startswith("group") else self.speech_word_map[int(card_id)]
 
     def ids_to_proposal(self, ids):
         return " ".join(f'"{self.get_card_text(card_id)}"' for card_id in ids)
@@ -500,9 +516,9 @@ JSONだけで回答してください。
     def build_speech_text(self, chunks):
         parts = []
         for i, chunk in enumerate(chunks):
-            text = chunk.get("text", "").strip()
-            if not text: continue
             ids = chunk.get("ids", [])
+            text = "".join(self.get_speech_card_text(card_id) for card_id in ids).strip()
+            if not text: continue
             last_id = str(ids[-1]) if ids else None
             is_last_chunk = i == len(chunks) - 1
             if text.endswith(("。","！","？","!","?")): parts.append(text)
