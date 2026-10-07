@@ -11,3 +11,4 @@ src/node_scripts/kashiwagi_speech_state_log.jsonl
 src/node_scripts/kashiwagi_state_log.json
 src/node_scripts/katakana_explanation_record.json
 src/node_scripts/shiritori_record.json
+src/node_scripts/propose_game/propose_game_word_card.json
