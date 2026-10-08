@@ -168,8 +168,8 @@ class ResponseGenerator:
         ids = [str(x) for x in ids]
         scanned_ids = [str(x) for x in self.scanned_qr_ids]
         used_qr_ids = [x for x in ids if x.isdigit()]
-        if len(used_qr_ids) not in [5, 6]:
-            raise ValueError(f"must use 5 or 6 QR cards: {len(used_qr_ids)}")
+        if len(used_qr_ids) not in [3, 4, 5, 6]:
+            raise ValueError(f"must use 3 to 6 QR cards: {len(used_qr_ids)}")
         if len(used_qr_ids) != len(set(used_qr_ids)):
             raise ValueError("same QR card used multiple times")
         for qr_id in used_qr_ids:
@@ -351,6 +351,8 @@ class ResponseGenerator:
         if initial_count == 2: score += 0.5
         elif initial_count == 3: score += 2.5
         elif initial_count == 4: score += 1.5
+        qr_count = sum(str(card_id).isdigit() for card_id in ids)
+        score += 0.5 * (qr_count - 3)
         return score
 
     def beam_order_cards(self, card_ids, beam_width=80, result_count=5):
@@ -383,13 +385,14 @@ class ResponseGenerator:
 
     def generate_legal_candidates(self, num_candidates=120):
         scanned_ids = [str(x) for x in self.scanned_qr_ids]
-        qr_sets_5 = [list(x) for x in combinations(scanned_ids, 5)]
-        qr_set_6 = scanned_ids.copy()
+        qr_sets = {count:[list(x) for x in combinations(scanned_ids, count)] for count in [3,4,5]}
+        qr_sets[6] = [scanned_ids.copy()]
         card_sets, seen_sets = [], set()
         attempts = 0
         while len(card_sets) < 180 and attempts < 5000:
             attempts += 1
-            used_qr = qr_set_6.copy() if attempts % 2 == 0 else random.choice(qr_sets_5).copy()
+            used_qr_count = random.choice([3,4,5,6])
+            used_qr = random.choice(qr_sets[used_qr_count]).copy()
             initial_ids = self.choose_initial_ids()
             cards = used_qr + initial_ids
             key = tuple(sorted(cards))
@@ -453,7 +456,7 @@ class ResponseGenerator:
 5. ロマンチック、面白い、印象に残る
 6. 小学生を含む場でも安心して読める
 
-QRカードを5枚使うか6枚使うかは評価しないでください。
+QRカードは3〜6枚のいずれでもよく、枚数は評価しないでください。
 基本カードの枚数も評価しないでください。
 候補を変更、並べ替え、追加、削除してはいけません。
 必ず0以上のnumberを1つだけ選んでください。
