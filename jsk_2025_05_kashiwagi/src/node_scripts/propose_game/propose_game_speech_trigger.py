@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import rospy
+import os
+import rospkg
 from std_msgs.msg import String
 from speech_recognition_msgs.msg import SpeechRecognitionCandidates
 from jsk_2025_05_kashiwagi.srv import SetKashiwagiState
@@ -8,6 +10,8 @@ class ProposeGameSpeechTrigger:
     def __init__(self):
         rospy.init_node("propose_game_speech_trigger")
         self.cur_state = "unknown"
+        self.path_to_pkg = rospkg.RosPack().get_path("jsk_2025_05_kashiwagi")
+        self.tmp_response_path = os.path.join(self.path_to_pkg, "data", "tmp", "tmp_response.txt")
         self.pub = rospy.Publisher("/talking_game_response", String, queue_size=1)
         self.set_state_srv = rospy.ServiceProxy("/set_kashiwagi_state", SetKashiwagiState)
         rospy.Subscriber("/kashiwagi_state", String, self.state_callback, queue_size=1)
@@ -37,8 +41,15 @@ class ProposeGameSpeechTrigger:
         except rospy.ServiceException as e:
             rospy.logerr(f"Service call failed: {e}")
             return
+        try:
+            with open(self.tmp_response_path, "r", encoding="utf-8") as f:
+                proposal_text = f.read().strip()
+        except Exception as e:
+            rospy.logerr(f"Failed to read proposal text: {e}")
+            return
         rospy.sleep(0.1)
-        self.pub.publish("propose_game")
+        self.pub.publish(proposal_text)
+        rospy.loginfo(f"published proposal: {proposal_text}")
 
 if __name__ == "__main__":
     try:
