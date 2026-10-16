@@ -81,24 +81,48 @@ class CorrectedSpeechToTextPublisher:
         if previous == current:
             return "DROP", ""
 
-        similarity = SequenceMatcher(None, previous, current).ratio()
-        length_diff = abs(len(current) - len(previous))
-
-        if similarity >= 0.9 and length_diff <= 3:
+        # Streaming results grow and get revised (punctuation, a word or two),
+        # so compare without punctuation and ask how much of the previous
+        # result survives in the current one, not how similar the two are
+        # overall: a result that has grown a lot is dissimilar as a whole.
+        prev_norm, _ = self._normalize(previous)
+        cur_norm, cur_index = self._normalize(current)
+        if not cur_norm:
             return "DROP", ""
+        if not prev_norm:
+            return "PROCESS_FULL", current
 
-        if similarity >= 0.75 and len(current) > len(previous):
-            matcher = SequenceMatcher(None, previous, current)
-            match = matcher.find_longest_match(0, len(previous), 0, len(current))
-            overlap_ratio = match.size / len(previous)
+        matcher = SequenceMatcher(None, prev_norm, cur_norm, autojunk=False)
+        blocks = [b for b in matcher.get_matching_blocks() if b.size > 0]
+        matched = sum(b.size for b in blocks)
 
-            if overlap_ratio >= 0.7:
-                new_part_start = match.b + match.size
-                new_part = current[new_part_start:].strip(" 、。！？!?，．")
-                if not new_part:
-                    return "DROP", ""
-                return "PROCESS_DIFF", new_part
+        if matched >= 0.7 * len(prev_norm):
+            # the previous result continues here; send what comes after where
+            # its end matched (single chars match by chance, so skip them)
+            tail = max((b for b in blocks if b.size >= 2), key=lambda b: b.a + b.size,
+                       default=blocks[-1])
+            end = tail.b + tail.size
+            if len(cur_norm) - end < self.MIN_NEW_CHARS:
+                return "DROP", ""
+            return "PROCESS_DIFF", current[cur_index[end]:].strip(self.PUNCTUATION)
+
+        if matched >= 0.8 * len(cur_norm):
+            # a shorter revision of what was already sent
+            return "DROP", ""
         return "PROCESS_FULL", current
+
+    PUNCTUATION = " 　、。，．！？!?,.・…「」『』（）()"
+    MIN_NEW_CHARS = 2  # a single trailing char is usually a revision, not new speech
+
+    @classmethod
+    def _normalize(cls, text):
+        """Text without punctuation/spaces, and where each kept char is in text."""
+        kept, index = [], []
+        for i, ch in enumerate(text):
+            if ch not in cls.PUNCTUATION:
+                kept.append(ch)
+                index.append(i)
+        return "".join(kept), index
         
         
     def process_result(self, raw_msg):
