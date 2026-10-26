@@ -22,6 +22,10 @@ class CorrectedSpeechToTextPublisher:
         self.timer = None
         self.timer = rospy.Timer(rospy.Duration(0.1), self.timer_callback)
         self.last_processed_text = None
+        self.last_processed_time = None
+        # Streaming results are revised within ~1 s of each other; a result coming
+        # later than this is a new utterance, even if it says the same thing.
+        self.forget_after_sec = rospy.get_param("~forget_after_sec", 2.0)
         self.first_result_time = None
         rospy.loginfo("corrected_speech_to_text_publisher started")
 
@@ -127,7 +131,12 @@ class CorrectedSpeechToTextPublisher:
         
     def process_result(self, raw_msg):
         raw_text = raw_msg.transcript[0].strip()
-        decision, text_to_process = self.judge_asr_result(self.last_processed_text, raw_text)
+        now = rospy.Time.now()
+        previous = self.last_processed_text
+        if (self.last_processed_time is not None
+                and (now - self.last_processed_time).to_sec() > self.forget_after_sec):
+            previous = None
+        decision, text_to_process = self.judge_asr_result(previous, raw_text)
 
         rospy.loginfo(f"last_processed_text = {self.last_processed_text}")
         rospy.loginfo(f"decision = {decision}")
@@ -150,6 +159,7 @@ class CorrectedSpeechToTextPublisher:
         rospy.loginfo(f"***********************corrected_text  = {corrected_text}*********************")
 
         self.last_processed_text = raw_text
+        self.last_processed_time = now
 
         self.pub.publish(corrected_msg)
 
