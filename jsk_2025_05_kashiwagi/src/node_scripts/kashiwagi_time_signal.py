@@ -29,6 +29,7 @@ class TimeSignal:
         self.schedule_and_soundfile = {
             # "15:00":f"{self.path_to_pkg}/data/kashiwagi_time_signal_1500.wav",
             "15:50":f"{self.path_to_pkg}/data/kashiwagi_time_signal_1550.wav",
+            "15:55":f"{self.path_to_pkg}/data/kashiwagi_song_nanatsunoko.mp3",
             "16:00":f"{self.path_to_pkg}/data/kashiwagi_time_signal_1600.wav"}
         self.client.wait_for_server()
         self.sound_file = None
