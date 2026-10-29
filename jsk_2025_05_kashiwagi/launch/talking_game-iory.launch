@@ -123,6 +123,8 @@
   <!--   <remap from="~output/is_speaking" to="is_speaking" /> -->
   <!-- </node> -->
 
+  <!-- nfc reader -->
+  <node name="nfc_ros_node" pkg="nfc_ros" type="nfc_ros_node.py" output="screen" />
 
   <!-- QR code reader -->
   <node pkg="jsk_2025_05_kashiwagi" type="qr_code_reader.py" name="qr_code_reader" output="screen" />
@@ -197,5 +199,8 @@
 
   <!-- propose game main -->
   <node pkg="jsk_2025_05_kashiwagi" type="propose_game_response_generator.py" name="propose_game_response_generator" output="screen"/>
+
+  <!-- nfc reader -->
+  <node pkg="jsk_2025_05_kashiwagi" type="kashiwagi_nfc_reader.py" name="kashiwagi_nfc_reader" output="screen"/>
   
 </launch>
