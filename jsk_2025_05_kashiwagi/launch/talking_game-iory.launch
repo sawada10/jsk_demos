@@ -8,7 +8,7 @@
   <arg name="audio_info_topic" default="/audio_info" doc="Selected audio info topic" />  
   <arg name="language" default="ja-JP"/>
   <arg name="self_cancellation" default="false"/>
-
+  
   <param name="robot_name" value="kashiwagi" />
 
   <!-- respeaker (no aec) -->
@@ -202,5 +202,11 @@
 
   <!-- nfc reader -->
   <node pkg="jsk_2025_05_kashiwagi" type="kashiwagi_nfc_reader.py" name="kashiwagi_nfc_reader" output="screen"/>
+
+  <!-- vlm vision description publisher -->
+  <node pkg="jsk_2025_05_kashiwagi" type="vlm_vision_description_publisher.py" name="vlm_vision_description_publisher" output="screen"/>
+
+  <!-- looking response generator -->
+  <node pkg="jsk_2025_05_kashiwagi" type="looking_response_generator.py" name="looking_response_generator" output="screen"/>
   
 </launch>

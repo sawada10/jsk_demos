@@ -205,6 +205,11 @@ class Listener:
             self.after_speech_req_state = None
             self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_genki.wav"
 
+        elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["これ見て"]):
+            self.during_speech_req_state = "daily:normal"
+            self.after_speech_req_state = "looking:thinking"
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_fumufumu.wav"
+
         # elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["金額", "見学"]):
         #     self.during_speech_req_state = "daily:happy"
         #     self.after_speech_req_state = None

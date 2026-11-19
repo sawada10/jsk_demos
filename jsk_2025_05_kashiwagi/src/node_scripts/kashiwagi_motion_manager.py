@@ -36,6 +36,8 @@ class MotionManager:
                 kashiwagi_utils.speaking_mode()  # 繰り返し実行される
             elif self.current_kashiwagi_state == "propose_game:speaking_turn":
                 kashiwagi_utils.patapata_mode()  # 繰り返し実行される
+            elif self.current_kashiwagi_state == "looking:speaking_turn":
+                kashiwagi_utils.patapata_mode()  # 繰り返し実行される
             elif self.current_kashiwagi_state == "daily:introduction":
                 kashiwagi_utils.speaking_mode()
             elif self.current_kashiwagi_state == "daily:singing":
@@ -57,6 +59,8 @@ class MotionManager:
             elif self.current_kashiwagi_state == "free_talk:thinking_turn":
                 kashiwagi_utils.thinking_mode()
             elif self.current_kashiwagi_state == "shiritori:thinking_turn":
+                kashiwagi_utils.thinking_mode()
+            elif self.current_kashiwagi_state == "looking:thinking":
                 kashiwagi_utils.thinking_mode()
             elif self.current_kashiwagi_state == "propose_game:thinking_turn" or self.current_kashiwagi_state == "propose_game:preparing_speech":
                 kashiwagi_utils.thinking_mode()

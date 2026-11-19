@@ -86,6 +86,10 @@ class KashiwagiSpeaker:
                 "wav": thinking_wav_file,
                 "interval": 8.0,
             },
+            "looking:thinking": {
+                "wav": thinking_wav_file,
+                "interval": 6.0,
+            },
         }
 
         cfg = repeat_config.get(self.cur_state)

@@ -54,6 +54,8 @@ class ModuleManager:
             "propose_game:preparing_speech": (225, 255, 40),
             "propose_game:speaking_turn": (0, 225, 78),
             "propose_game:happy": (255, 110, 243),
+            "looking:thinking":  (255, 255, 40),
+            "looking:speaking_turn": (0, 225, 78),
         }
 
         self.cheek_led_color_map = {
@@ -85,6 +87,8 @@ class ModuleManager:
             "propose_game:speaking_turn": (255, 35, 140),
             "propose_game:preparing_speech": (255, 40, 40),
             "propose_game:happy": (255, 110, 243),
+            "looking:thinking": (255, 40, 40),
+            "looking:speaking_turn": (255, 35, 140),
         }
 
         self.eye_map = {
@@ -123,6 +127,7 @@ class ModuleManager:
             "propose_game:speaking_turn": "delighted",
             "propose_game:happy": "expecting",
             "propose_game:thinking_turn": "normal",
+            "looking:speaking_turn": "delighted",
         }
 
         rospy.Subscriber('/kashiwagi_state', String, self.state_callback, queue_size=1)
