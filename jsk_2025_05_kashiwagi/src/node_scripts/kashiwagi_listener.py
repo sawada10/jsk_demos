@@ -115,10 +115,10 @@ class Listener:
             self.after_speech_req_state = None
             self.sound_file= f"{self.path_to_pkg}/data/kashiwagi_ohayou.wav"
             
-        elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["自己紹介", "自己", "事故"]):
-            self.during_speech_req_state = "daily:introduction"
-            self.after_speech_req_state = "daily:happy"
-            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_self_introduction_4.wav"
+        # elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["自己紹介", "自己", "事故"]):
+        #     self.during_speech_req_state = "daily:introduction"
+        #     self.after_speech_req_state = "daily:happy"
+        #     self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_self_introduction_4.wav"
 
         # elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["今日の予定"]):
         #     self.during_speech_req_state = "daily:introduction"
@@ -172,6 +172,11 @@ class Listener:
 
         elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["おしゃべり", "お喋り"]):
             self.during_speech_req_state = "free_talk:starting"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_iiyo.wav"
+
+        elif self.cur_kashiwagi_state == "daily:normal" and self.is_mentioned(spoken_word, ["アペック", "あ、てっこ", "かけっこ", "ま てっこ", "あべっこ", "あ、ぺっこ"]):
+            self.during_speech_req_state = "atekko:starting"
             self.after_speech_req_state = None
             self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_iiyo.wav"
 
@@ -397,6 +402,38 @@ class Listener:
 
         elif self.cur_kashiwagi_state == "propose_game:playing" and self.is_mentioned(spoken_word, ["やっほー", "ヤッホー"]):
             self.during_speech_req_state = "propose_game:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_yahho.wav"
+
+######################
+
+        elif self.cur_kashiwagi_state in ["atekko:theme_waiting", "atekko:hint_waiting", "atekko:ready_to_speak"] and self.is_mentioned(spoken_word, ["こんにちは", "こんにち"]):
+            self.during_speech_req_state = "atekko:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_konnichiwa.wav"
+            
+        elif self.cur_kashiwagi_state in ["atekko:theme_waiting", "atekko:hint_waiting", "atekko:ready_to_speak"] and self.is_mentioned(spoken_word, ["かわいい", "可愛い"]):
+            self.during_speech_req_state = "atekko:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_ehehe.wav"
+
+        elif self.cur_kashiwagi_state in ["atekko:theme_waiting", "atekko:hint_waiting", "atekko:ready_to_speak"] and self.is_mentioned(spoken_word, ["おはよう"]):
+            self.during_speech_req_state = "atekko:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_ohayou.wav"
+            
+        elif self.cur_kashiwagi_state in ["atekko:theme_waiting", "atekko:hint_waiting", "atekko:ready_to_speak", "atekko:thinking_turn", "atekko:preparing_speech"] and self.is_mentioned(spoken_word, ["おわり", "終わり"]):
+            self.during_speech_req_state = "daily:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_tanoshikattane.wav"
+
+        elif self.cur_kashiwagi_state in ["atekko:theme_waiting", "atekko:hint_waiting", "atekko:ready_to_speak"] and self.is_mentioned(spoken_word, ["ありがとう", "ありがと"]):
+            self.during_speech_req_state = "atekko:happy"
+            self.after_speech_req_state = None
+            self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_arigato.wav"
+
+        elif self.cur_kashiwagi_state in ["atekko:theme_waiting", "atekko:hint_waiting", "atekko:ready_to_speak"] and self.is_mentioned(spoken_word, ["やっほー", "ヤッホー"]):
+            self.during_speech_req_state = "atekko:happy"
             self.after_speech_req_state = None
             self.sound_file = f"{self.path_to_pkg}/data/kashiwagi_yahho.wav"
 

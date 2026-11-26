@@ -48,6 +48,8 @@ class ResponseSpeakerWithAction:
                 resp = self.set_state_srv("propose_game:happy")
             elif self.current_kashiwagi_state.split(":")[0] == "looking":
                 resp = self.set_state_srv("daily:happy")
+            elif self.current_kashiwagi_state.split(":")[0] == "atekko":
+                resp = self.set_state_srv("atekko:hint_waiting")
             else:
                 rospy.logwarn(f"Unknown Kashiwagi state after speech: {self.current_kashiwagi_state}")
                 return
@@ -70,6 +72,8 @@ class ResponseSpeakerWithAction:
                     resp = self.set_state_srv("propose_game:speaking_turn")
                 elif self.current_kashiwagi_state.split(":")[0] == "looking":
                     resp = self.set_state_srv("looking:speaking_turn")
+                elif self.current_kashiwagi_state.split(":")[0] == "atekko":
+                    resp = self.set_state_srv("atekko:speaking_turn")
                 else:
                     rospy.logwarn(f"Unknown Kashiwagi state while speaking: {self.current_kashiwagi_state}")
                     self.is_speaking = True

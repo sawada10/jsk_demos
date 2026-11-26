@@ -38,6 +38,8 @@ class MotionManager:
                 kashiwagi_utils.patapata_mode()  # 繰り返し実行される
             elif self.current_kashiwagi_state == "looking:speaking_turn":
                 kashiwagi_utils.patapata_mode()  # 繰り返し実行される
+            elif self.current_kashiwagi_state == "atekko:speaking_turn":
+                kashiwagi_utils.patapata_mode()  # 繰り返し実行される
             elif self.current_kashiwagi_state == "daily:introduction":
                 kashiwagi_utils.speaking_mode()
             elif self.current_kashiwagi_state == "daily:singing":
@@ -52,6 +54,8 @@ class MotionManager:
                 kashiwagi_utils.breath_mode_and_look_at_direction(self.neck_yaw_angle)
             elif self.current_kashiwagi_state == "propose_game:playing":
                 kashiwagi_utils.breath_mode_and_look_at_direction(self.neck_yaw_angle)
+            elif self.current_kashiwagi_state in ["atekko:ready_to_speak", "atekko:theme_waiting", "atekko:hint_waiting"]:
+                kashiwagi_utils.breath_mode_and_look_at_direction(self.neck_yaw_angle)
             elif self.current_kashiwagi_state == "talking_game:thinking_turn":
                 kashiwagi_utils.thinking_mode()
             elif self.current_kashiwagi_state == "katakanashi:thinking_turn":
@@ -63,6 +67,8 @@ class MotionManager:
             elif self.current_kashiwagi_state == "looking:thinking":
                 kashiwagi_utils.thinking_mode()
             elif self.current_kashiwagi_state == "propose_game:thinking_turn" or self.current_kashiwagi_state == "propose_game:preparing_speech":
+                kashiwagi_utils.thinking_mode()
+            elif self.current_kashiwagi_state == "atekko:thinking_turn" or self.current_kashiwagi_state == "atekko:preparing_speech":
                 kashiwagi_utils.thinking_mode()
             elif self.current_kashiwagi_state == "propose_game:ready_to_speak":
                 kashiwagi_utils.breath_mode_and_look_at_direction(self.neck_yaw_angle)

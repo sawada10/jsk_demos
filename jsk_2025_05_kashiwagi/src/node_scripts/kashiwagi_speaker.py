@@ -56,6 +56,8 @@ class KashiwagiSpeaker:
                 wav_file = f"{self.path_to_pkg}/data/kashiwagi_thinking_2.wav"
             elif self.cur_state == "move:goal":
                 wav_file = f"{self.path_to_pkg}/data/kashiwagi_kitayo.wav"
+            elif self.cur_state == "atekko:thinking_turn":
+                wav_file = f"{self.path_to_pkg}/data/kashiwagi_fumufumu.wav"
             elif self.cur_state == "move:approaching_person":
                 wav_file = f"{self.path_to_pkg}/data/kashiwagi_yoisho.wav"
                 self.last_play_time = time.time()

@@ -208,5 +208,11 @@
 
   <!-- looking response generator -->
   <node pkg="jsk_2025_05_kashiwagi" type="looking_response_generator.py" name="looking_response_generator" output="screen"/>
+
+  <!-- atekko generator -->
+  <node pkg="jsk_2025_05_kashiwagi" type="atekko_qa_generator_node.py" name="atekko_qa_generator_node" output="screen"/>
+
+  <!-- atekko trigger -->
+  <node pkg="jsk_2025_05_kashiwagi" type="atekko_speech_trigger.py" name="atekko_speech_trigger" output="screen"/>
   
 </launch>

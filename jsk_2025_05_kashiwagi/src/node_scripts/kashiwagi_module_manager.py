@@ -56,6 +56,14 @@ class ModuleManager:
             "propose_game:happy": (255, 110, 243),
             "looking:thinking":  (255, 255, 40),
             "looking:speaking_turn": (0, 225, 78),
+            "atekko:starting": (225, 110, 243),
+            "atekko:theme_waiting": (255, 255, 40),
+            "atekko:hint_waiting": (255, 255, 40),
+            "atekko:ready_to_speak": (225, 168, 40),
+            "atekko:thinking_turn": (255, 255, 40),
+            "atekko:preparing_speech": (225, 255, 40),
+            "atekko:speaking_turn": (0, 225, 78),
+            "atekko:happy": (255, 110, 243),
         }
 
         self.cheek_led_color_map = {
@@ -89,6 +97,14 @@ class ModuleManager:
             "propose_game:happy": (255, 110, 243),
             "looking:thinking": (255, 40, 40),
             "looking:speaking_turn": (255, 35, 140),
+            "atekko:starting": (225, 110, 243),
+            "atekko:theme_waiting": (255, 40, 40),
+            "atekko:hint_waiting": (255, 40, 40),
+            "atekko:ready_to_speak": (225, 40, 40),
+            "atekko:thinking_turn": (255, 40, 40),
+            "atekko:preparing_speech": (225, 40, 40),
+            "atekko:speaking_turn": (225, 35, 140),
+            "atekko:happy": (255, 110, 243),
         }
 
         self.eye_map = {
@@ -128,6 +144,11 @@ class ModuleManager:
             "propose_game:happy": "expecting",
             "propose_game:thinking_turn": "normal",
             "looking:speaking_turn": "delighted",
+            "atekko:starting": "happy",
+            "atekko:theme_waiting": "normal",
+            "atekko:hint_waiting": "normal",
+            "atekko:happy": "happy",
+            "atekko:thinking_turn": "normal",
         }
 
         rospy.Subscriber('/kashiwagi_state', String, self.state_callback, queue_size=1)

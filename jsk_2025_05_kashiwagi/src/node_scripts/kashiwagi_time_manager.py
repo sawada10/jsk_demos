@@ -8,10 +8,11 @@ class StateAutoResetter:
         rospy.init_node("kashiwagi_state_resetter")
         rospy.sleep(1)
 
-        self.target_states = ["daily:happy", "daily:waking_up", "daily:goodbye", "daily:time_signal", "talking_game:starting", "talking_game:happy", "move:surprised", "katakanashi:starting", "katakanashi:happy", "move:happy", "move:goal", "shiritori:starting", "shiritori:happy", "free_talk:starting", "free_talk:happy", "propose_game:happy", "propose_game:starting"]
+        self.target_states = ["daily:happy", "daily:waking_up", "daily:goodbye", "daily:time_signal", "talking_game:starting", "talking_game:happy", "move:surprised", "katakanashi:starting", "katakanashi:happy", "move:happy", "move:goal", "shiritori:starting", "shiritori:happy", "free_talk:starting", "free_talk:happy", "propose_game:happy", "propose_game:starting", "atekko:happy", "atekko:starting"]
         self.timeout_duration = rospy.Duration(5.0)  # 5秒
 
         self.cur_state = "unknown"
+        self.prev_state = "unknown"
         self.state_enter_time = rospy.Time.now()
 
         rospy.Subscriber("/kashiwagi_state", String, self.state_callback, queue_size=1)
@@ -26,6 +27,7 @@ class StateAutoResetter:
         new_state = msg.data
         if new_state != self.cur_state:
             rospy.loginfo(f"State changed: {self.cur_state} → {new_state}")
+            self.prev_state = self.cur_state
             self.cur_state = new_state
             self.state_enter_time = rospy.Time.now()
 
@@ -49,10 +51,14 @@ class StateAutoResetter:
                 req_state = "move:staying"
             elif self.cur_state in ["daily:time_signal"]:
                 req_state = "daily:normal"
+            elif self.cur_state in ["atekko:starting"]:
+                req_state = "atekko:theme_waiting"
+            elif self.cur_state in ["atekko:happy"]:
+                req_state = self.prev_state
 
             elapsed = rospy.Time.now() - self.state_enter_time
             if elapsed >= self.timeout_duration:
-                rospy.loginfo(f"State '{self.cur_state}' timed out after {elapsed.to_sec()}s. Resetting to 'daily:normal'.")
+                rospy.loginfo(f"State '{self.cur_state}' timed out after {elapsed.to_sec()}s. Resetting to '{req_state}'.")
                 try:
                     resp = self.set_state_srv(req_state)
                     if resp.success:
